@@ -338,17 +338,41 @@ def run():
         current_spin = r.get(
             f"{SPINITRON_API_URL}/spins?count=1", headers=spinitron_headers
         ).json()["items"][0]
-        current_playlist = r.get(
+        playlist_response = r.get(
             f"{SPINITRON_API_URL}/playlists/{current_spin['playlist_id']}",
             headers=spinitron_headers,
-        ).json()
+        )
+        current_playlist = playlist_response.json()
+
+        # Handle API errors or missing data
+        if playlist_response.status_code != 200 or "title" not in current_playlist:
+            print(
+                Colors.YELLOW
+                + f"\n---------{timestamp_string}---------\nWARNING: Could not fetch playlist data (status={playlist_response.status_code}). Response: {current_playlist}\nRetrying in 10 seconds...\n"
+                + Colors.RESET
+            )
+            time.sleep(10)
+            continue
+
         current_playlist_title = current_playlist["title"]
         current_playlist_category = current_playlist["category"]
 
-        current_persona = r.get(
+        persona_response = r.get(
             f"{SPINITRON_API_URL}/personas/{current_playlist['persona_id']}",
             headers=spinitron_headers,
-        ).json()
+        )
+        current_persona = persona_response.json()
+
+        # Handle API errors or missing data
+        if persona_response.status_code != 200 or "name" not in current_persona:
+            print(
+                Colors.YELLOW
+                + f"\n---------{timestamp_string}---------\nWARNING: Could not fetch persona data (status={persona_response.status_code}). Response: {current_persona}\nRetrying in 10 seconds...\n"
+                + Colors.RESET
+            )
+            time.sleep(10)
+            continue
+
         current_persona_name = current_persona["name"]
 
         # Parse song data, get time difference between song end and current time
